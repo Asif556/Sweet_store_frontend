@@ -20,7 +20,8 @@ const AddOrder = () => {
     mobile: '',
     address: '',
     preference: '',
-    deliveryDate: ''
+    deliveryDate: '',
+    advancePaid: ''
   });
 
   // List of admins
@@ -158,6 +159,12 @@ const AddOrder = () => {
       return;
     }
 
+    const advanceValue = parseFloat(formData.advancePaid) || 0;
+    if (advanceValue > getTotalAmount()) {
+      alert('Advance payment cannot exceed the total amount');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -176,6 +183,7 @@ const AddOrder = () => {
         unit: item.unit || 'piece'
       })),
       total: getTotalAmount(),
+      advancePaid: parseFloat(formData.advancePaid) || 0,
       status: 'pending'
     };
 
@@ -200,7 +208,8 @@ const AddOrder = () => {
         mobile: '',
         address: '',
         preference: '',
-        deliveryDate: serverDate
+        deliveryDate: serverDate,
+        advancePaid: ''
       });
 
       setTimeout(() => setSuccess(false), 3000);
@@ -359,6 +368,33 @@ const AddOrder = () => {
                   placeholder="Any special requests or notes"
                 />
               </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  💰 Advance Payment
+                  <span className="ml-2 text-xs font-normal text-gray-400">(Optional)</span>
+                </label>
+                <input
+                  type="number"
+                  name="advancePaid"
+                  value={formData.advancePaid}
+                  onChange={handleFormChange}
+                  min="0"
+                  step="1"
+                  onFocus={(e) => e.target.select()}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Enter advance amount (e.g. 500)"
+                />
+                {parseFloat(formData.advancePaid) > 0 && (
+                  <p className="text-xs text-green-600 mt-1 font-medium">
+                    ✓ Advance: ₹{parseFloat(formData.advancePaid).toFixed(0)} &nbsp;|&nbsp;
+                    Remaining Due: ₹{Math.max(0, getTotalAmount() - parseFloat(formData.advancePaid)).toFixed(0)}
+                  </p>
+                )}
+                {parseFloat(formData.advancePaid) > getTotalAmount() && getTotalAmount() > 0 && (
+                  <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Advance cannot exceed total amount</p>
+                )}
+              </div>
             </div>
 
             {/* Cart Summary - Mobile Responsive */}
@@ -499,11 +535,23 @@ const AddOrder = () => {
                   </div>
 
                   {/* Total Amount */}
-                  <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+                  <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg space-y-1.5">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Total Amount</span>
                       <span className="text-lg sm:text-xl font-semibold text-gray-900">₹{getTotalAmount().toFixed(0)}</span>
                     </div>
+                    {parseFloat(formData.advancePaid) > 0 && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-green-600">Advance Paid</span>
+                          <span className="text-sm font-semibold text-green-600">- ₹{parseFloat(formData.advancePaid).toFixed(0)}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-gray-200 pt-1.5">
+                          <span className="text-sm font-bold text-red-600">Remaining Due</span>
+                          <span className="text-base font-bold text-red-600">₹{Math.max(0, getTotalAmount() - parseFloat(formData.advancePaid)).toFixed(0)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </>
               )}
