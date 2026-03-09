@@ -18,6 +18,7 @@ const UserPanel = () => {
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('default');
   const [visibleCount, setVisibleCount] = useState(8); // Show 8 sweets initially
   const [visibleFestivalCount, setVisibleFestivalCount] = useState(8); // Show 8 festival sweets initially
 
@@ -145,24 +146,37 @@ const UserPanel = () => {
   };
 
   // Filter sweets by selected category and search query
-  const filteredSweets = sweets.filter(sweet => {
-    // Exclude festival sweets from main collection
-    if (sweet.isFestival) return false;
+  const filteredSweets = sweets
+    .filter(sweet => {
+      // Exclude festival sweets from main collection
+      if (sweet.isFestival) return false;
 
-    // Filter by search query (case-insensitive) - searches across ALL categories
-    const matchesSearch = !searchQuery ||
-      sweet.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sweet.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      // Filter by search query (case-insensitive) - searches across ALL categories
+      const matchesSearch = !searchQuery ||
+        sweet.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sweet.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // If there's a search query, ignore category filter and search all items
-    if (searchQuery) {
-      return matchesSearch;
-    }
+      // If there's a search query, ignore category filter and search all items
+      if (searchQuery) {
+        return matchesSearch;
+      }
 
-    // Filter by category when no search is active
-    const matchesCategory = selectedCategory === 'All' || sweet.category === selectedCategory;
-    return matchesCategory;
-  });
+      // Filter by category when no search is active
+      const matchesCategory = selectedCategory === 'All' || sweet.category === selectedCategory;
+      return matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortOption === 'alpha') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+      if (sortOption === 'price-high-low') {
+        return (b.rate || b.price || 0) - (a.rate || a.price || 0);
+      }
+      if (sortOption === 'price-low-high') {
+        return (a.rate || a.price || 0) - (b.rate || b.price || 0);
+      }
+      return 0;
+    });
 
   // Get festival sweets separately
   const festivalSweets = sweets.filter(sweet => sweet.isFestival);
@@ -327,6 +341,41 @@ const UserPanel = () => {
                     <X className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                 )}
+              </div>
+            </motion.div>
+
+            {/* Sort Options */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mb-6 sm:mb-8 max-w-xl mx-auto px-3 xs:px-4"
+            >
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Filter className="h-4 w-4 text-white" />
+                <h3 className="text-base sm:text-lg font-semibold text-white">Sort by</h3>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                {[
+                  { value: 'default', label: 'Default' },
+                  { value: 'alpha', label: 'A → Z' },
+                  { value: 'price-high-low', label: 'Price: High → Low' },
+                  { value: 'price-low-high', label: 'Price: Low → High' },
+                ].map(opt => (
+                  <motion.button
+                    key={opt.value}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => { setSortOption(opt.value); setVisibleCount(8); }}
+                    className={`px-4 xs:px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold transition-all shadow-md text-xs xs:text-sm sm:text-base touch-manipulation min-h-[44px] ${
+                      sortOption === opt.value
+                        ? 'bg-white text-[#C41E3A] shadow-lg'
+                        : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
+                    }`}
+                  >
+                    {opt.label}
+                  </motion.button>
+                ))}
               </div>
             </motion.div>
 
